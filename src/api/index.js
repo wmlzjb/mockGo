@@ -1,7 +1,7 @@
 'use strict'
 let Mock = require('mockjs');
 
-let myApi = (obj) => {
+module.exports.mockIndex = function *mockIndex(){
     let data = Mock.mock({
         'list|1-10': [
             {
@@ -9,7 +9,5 @@ let myApi = (obj) => {
             }
         ]
     });
-    obj.response.body = JSON.stringify(data);
+    this.response.body = JSON.stringify(data);
 };
-
-module.exports = myApi;
