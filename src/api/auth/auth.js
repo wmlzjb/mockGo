@@ -1,42 +1,41 @@
 'use strict'
 let jwt = require('koa-jwt');
-let JWT_SECRET = 'secret shem';
+let JWT_SECRET = 'shem-secret';
 
 module.exports = (app, myRouter) => {
-    myRouter.get('/authorize', function* authorize() {
+    myRouter.get('/authorize', function(ctx, next) {
         let user = { id: 1, name: 'shem' };
         let token = jwt.sign(user, JWT_SECRET);
-        this.response.body = JSON.stringify({ oauth_token: token, user: user });
+        ctx.body = JSON.stringify({ oauth_token: token, user: user });
     });
 
-    app.use(function* (next) {
-        try {
-            yield next;
-        } catch (err) {
+    myRouter.use(function(ctx, next) {
+        return next().catch((err) => {
             if (401 == err.status) {
-                this.status = 401;
-                this.body = 'Protected resource, use Authorization header to get access\n';
+                ctx.status = 401;
+                ctx.body = 'Protected resource, use Authorization header to get access\n';
             } else {
                 throw err;
             }
-        }
-    });
-
-    app.use(function* (next) {
-        if (this.url.match(/^\/public/)) {
-            this.body = 'unprotected\n';
-        } else {
-            yield next;
-        }
+        });
     });
 
     // Middleware below this line is only reached if JWT token is valid
-    app.use(jwt({ secret: JWT_SECRET }));
+    myRouter.use(jwt({ secret: JWT_SECRET }));
 
-    // Protected middleware
-    app.use(function* () {
-        if (this.url.match(/^\/api/)) {
-            this.body = 'protected\n';
+    // Unprotected middleware 
+    myRouter.use(function(ctx, next) {
+        if (ctx.url.match(/^\/public/)) {
+            ctx.body = 'unprotected\n';
+        } else {
+            return next();
+        }
+    });
+
+    // Protected middleware 
+    myRouter.use(function(ctx) {
+        if (ctx.url.match(/^\/api/)) {
+            ctx.body = 'protected\n';
         }
     });
 }
